@@ -1,9 +1,11 @@
 "use client"
 
-import { Star } from "lucide-react"
+import { useState } from "react"
+import { Download, Star } from "lucide-react"
 
 import { NoDataFound } from "@/components/no-data-found"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -19,7 +21,8 @@ import {
   type Employee,
   type ReviewNote,
 } from "@/lib/types"
-import { formatFullDate } from "@/lib/date-utils"
+import { formatFullDate, type PeriodMode } from "@/lib/date-utils"
+import { downloadEmployeeReportPdf } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 import { groupReviewsByDate, type GroupedReviews } from "./employee-list"
@@ -87,9 +90,18 @@ function DateGroup({ group }: { group: GroupedReviews }) {
 type EmployeeDetailProps = {
   employee: Employee
   reviews: ReviewNote[]
+  anchorDate: Date
+  periodMode: PeriodMode
 }
 
-export function EmployeeDetail({ employee, reviews }: EmployeeDetailProps) {
+export function EmployeeDetail({
+  employee,
+  reviews,
+  anchorDate,
+  periodMode,
+}: EmployeeDetailProps) {
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
   const grouped = groupReviewsByDate(reviews)
   const avgRating =
     reviews.filter((r) => r.rating !== undefined).length > 0
@@ -98,6 +110,21 @@ export function EmployeeDetail({ employee, reviews }: EmployeeDetailProps) {
           reviews.filter((r) => r.rating !== undefined).length
         ).toFixed(1)
       : null
+
+  async function handleDownloadReport() {
+    setIsDownloading(true)
+    setDownloadError(null)
+
+    try {
+      await downloadEmployeeReportPdf(employee.id, anchorDate, periodMode)
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error ? error.message : "Failed to download report"
+      )
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -110,7 +137,16 @@ export function EmployeeDetail({ employee, reviews }: EmployeeDetailProps) {
             </p>
             <p className="text-sm text-muted-foreground">{employee.team}</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap items-start gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadReport}
+              disabled={isDownloading}
+            >
+              <Download />
+              {isDownloading ? "Generating..." : "Download Report"}
+            </Button>
             <Card size="sm" className="min-w-20 text-center">
               <CardHeader className="pb-0">
                 <CardDescription>Notes</CardDescription>
@@ -127,6 +163,11 @@ export function EmployeeDetail({ employee, reviews }: EmployeeDetailProps) {
             )}
           </div>
         </div>
+        {downloadError && (
+          <p className="mt-3 text-sm text-destructive" role="alert">
+            {downloadError}
+          </p>
+        )}
         <Separator className="mt-5" />
       </header>
 

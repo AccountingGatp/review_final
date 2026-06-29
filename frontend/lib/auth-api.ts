@@ -33,6 +33,22 @@ export async function loginWithEmail(email: string): Promise<LoginResponse> {
   return response.json() as Promise<LoginResponse>
 }
 
+export async function loginWithGoogle(credential: string): Promise<LoginResponse> {
+  const response = await fetch(`${BASE_URL}${API_ENDPOINTS.auth.google}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ credential }),
+  })
+
+  if (!response.ok) {
+    throw new Error(await parseError(response))
+  }
+
+  return response.json() as Promise<LoginResponse>
+}
+
 export async function authFetch(input: string, init: RequestInit = {}) {
   const token = getStoredToken()
   const headers = new Headers(init.headers)

@@ -6,6 +6,7 @@ import express from "express"
 import { connectDB } from "./config/db.js"
 import authRoutes from "./routes/auth.routes.js"
 import employeeRoutes from "./routes/employee.routes.js"
+import reportRoutes from "./routes/report.routes.js"
 import reviewRoutes from "./routes/review.routes.js"
 
 const app = express()
@@ -20,6 +21,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/auth", authRoutes)
 app.use("/api/employees", employeeRoutes)
+app.use("/api/reports", reportRoutes)
 app.use("/api/reviews", reviewRoutes)
 
 async function startServer() {

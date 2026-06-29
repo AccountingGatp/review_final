@@ -11,7 +11,7 @@ import {
 } from "react"
 import { useRouter } from "next/navigation"
 
-import { loginWithEmail } from "@/lib/auth-api"
+import { loginWithEmail, loginWithGoogle } from "@/lib/auth-api"
 import {
   clearAuthSession,
   getStoredToken,
@@ -26,6 +26,7 @@ type AuthContextValue = {
   isAuthenticated: boolean
   isLoading: boolean
   login: (email: string) => Promise<void>
+  loginWithGoogle: (credential: string) => Promise<void>
   logout: () => void
 }
 
@@ -49,6 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
   }, [])
 
+  const loginWithGoogleCredential = useCallback(async (credential: string) => {
+    const data = await loginWithGoogle(credential)
+    setAuthSession(data.token, data.user)
+    setToken(data.token)
+    setUser(data.user)
+  }, [])
+
   const logout = useCallback(() => {
     clearAuthSession()
     setToken(null)
@@ -62,9 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(token),
       isLoading,
       login,
+      loginWithGoogle: loginWithGoogleCredential,
       logout,
     }),
-    [user, token, isLoading, login, logout]
+    [user, token, isLoading, login, loginWithGoogleCredential, logout]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

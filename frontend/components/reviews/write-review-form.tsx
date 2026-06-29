@@ -181,7 +181,7 @@ export function WriteReviewForm() {
               <Label htmlFor="review-rating">Rating</Label>
               <Select
                 value={rating}
-                onValueChange={setRating}
+                onValueChange={(value) => setRating(value ?? "5")}
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="review-rating" className="w-full">

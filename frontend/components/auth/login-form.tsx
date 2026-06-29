@@ -15,10 +15,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/hooks/use-auth"
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button"
+import { isGoogleAuthEnabled } from "@/components/auth/google-auth-provider"
 
 export function LoginForm() {
   const router = useRouter()
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +44,20 @@ export function LoginForm() {
     }
   }
 
+  async function handleGoogleSignIn(credential: string) {
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      await loginWithGoogle(credential)
+      router.replace("/")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-in failed")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
@@ -50,7 +66,8 @@ export function LoginForm() {
         </div>
         <CardTitle>Sign in</CardTitle>
         <CardDescription>
-          Enter your email to access the employee review portal.
+          Sign in with Google or your work email to access the employee review
+          portal.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -62,22 +79,29 @@ export function LoginForm() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@company.com"
+              placeholder="you@gatpsolutions.com"
               autoComplete="email"
               required
               disabled={isSubmitting}
             />
           </div>
 
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Sign in with email"}
+          </Button>
+
+          {isGoogleAuthEnabled() && (
+            <GoogleSignInButton
+              onSuccess={handleGoogleSignIn}
+              disabled={isSubmitting}
+            />
+          )}
+
           {error && (
             <p className="text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </Button>
         </form>
       </CardContent>
     </Card>

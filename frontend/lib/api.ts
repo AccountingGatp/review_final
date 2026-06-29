@@ -1,6 +1,8 @@
 import type { AuthorRole, Employee, ReviewNote } from "@/lib/types"
 import { authFetch } from "@/lib/auth-api"
 import { API_ENDPOINTS, BASE_URL } from "@/lib/global.js"
+import type { PeriodMode } from "@/lib/date-utils"
+import { toInputDateValue } from "@/lib/date-utils"
 
 export type NewEmployeePayload = {
   name: string
@@ -135,4 +137,40 @@ export async function createReview(payload: NewReviewPayload): Promise<ReviewNot
 
   const data = (await response.json()) as AddReviewResponse
   return data.review
+}
+
+function getFilenameFromDisposition(header: string | null) {
+  if (!header) return "employee-review-report.pdf"
+  const match = header.match(/filename="([^"]+)"/)
+  return match?.[1] ?? "employee-review-report.pdf"
+}
+
+export async function downloadEmployeeReportPdf(
+  employeeId: string,
+  anchorDate: Date,
+  periodMode: PeriodMode
+): Promise<void> {
+  const params = new URLSearchParams({
+    anchorDate: toInputDateValue(anchorDate),
+    periodMode,
+  })
+
+  const response = await authFetch(
+    `${BASE_URL}${API_ENDPOINTS.reports.employeePdf(employeeId)}?${params.toString()}`
+  )
+
+  if (!response.ok) {
+    throw new Error(await parseError(response))
+  }
+
+  const blob = await response.blob()
+  const filename = getFilenameFromDisposition(
+    response.headers.get("Content-Disposition")
+  )
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
 }

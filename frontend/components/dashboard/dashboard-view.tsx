@@ -135,7 +135,12 @@ export function DashboardView() {
               <Card className="min-h-[420px] overflow-hidden lg:min-h-0">
                 <CardContent className="h-full pt-4">
                   {selectedEmployee ? (
-                    <EmployeeDetail employee={selectedEmployee} reviews={selectedReviews} />
+                    <EmployeeDetail
+                      employee={selectedEmployee}
+                      reviews={selectedReviews}
+                      anchorDate={anchorDate}
+                      periodMode={periodMode}
+                    />
                   ) : (
                     <NoDataFound
                       title="No employees found"

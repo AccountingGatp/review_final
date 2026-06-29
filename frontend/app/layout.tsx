@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from "@/hooks/use-auth"
+import { GoogleAuthProvider } from "@/components/auth/google-auth-provider"
 import { cn } from "@/lib/utils"
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
@@ -27,7 +28,9 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <TooltipProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <GoogleAuthProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </GoogleAuthProvider>
           </TooltipProvider>
         </ThemeProvider>
       </body>
