@@ -2,7 +2,9 @@ import { Geist, Geist_Mono, Inter } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { AuthProvider } from "@/hooks/use-auth"
+import { cn } from "@/lib/utils"
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
 
@@ -23,7 +25,11 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

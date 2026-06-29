@@ -1,0 +1,63 @@
+import { Router, type Request, type Response } from "express"
+
+import { User } from "../models/User.js"
+import { normalizeUserRole, toDbUserRole } from "../types/user.js"
+import { signToken } from "../utils/jwt.js"
+
+const router = Router()
+
+function formatUser(user: {
+  _id: { toString(): string }
+  name: string
+  email: string
+  team: string
+  role: string
+}) {
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    team: user.team,
+    role: toDbUserRole(user.role),
+  }
+}
+
+router.post("/login", async (req: Request, res: Response) => {
+  try {
+    const email = String(req.body.email ?? "")
+      .trim()
+      .toLowerCase()
+
+    if (!email) {
+      res.status(400).json({ message: "Email is required" })
+      return
+    }
+
+    const user = await User.findOne({ email })
+
+    if (!user) {
+      res.status(404).json({ message: "No account found with this email" })
+      return
+    }
+
+    const dbRole = toDbUserRole(user.role)
+
+    const token = signToken({
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: dbRole,
+    })
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: formatUser(user),
+    })
+  } catch (error) {
+    console.error("Login failed:", error)
+    res.status(500).json({ message: "Login failed" })
+  }
+})
+
+export default router
