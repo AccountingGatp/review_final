@@ -35,6 +35,7 @@ export function GoogleSignInButton({ onSuccess, disabled }: GoogleSignInButtonPr
         size="large"
         shape="rectangular"
         text="signin_with"
+        width="full"
       />
     </div>
   )
