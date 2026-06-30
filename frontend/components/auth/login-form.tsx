@@ -72,7 +72,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
-          {/* <div className="grid gap-2">
+          <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -88,7 +88,7 @@ export function LoginForm() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Signing in..." : "Sign in with email"}
-          </Button> */}
+          </Button>
 
           {isGoogleAuthEnabled() && (
             <GoogleSignInButton
