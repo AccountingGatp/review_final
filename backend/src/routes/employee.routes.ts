@@ -1,4 +1,5 @@
 import { Router, type Response } from "express"
+import mongoose from "mongoose"
 
 import {
   authenticate,
@@ -40,9 +41,24 @@ function formatUser(user: UserDocument) {
   }
 }
 
-router.get("/", async (_req, res: Response) => {
+router.get("/", authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 })
+    if (!req.user) {
+      res.status(401).json({ message: "Authentication required" })
+      return
+    }
+
+    const role = normalizeUserRole(req.user.role)
+    const query =
+      role === "MANAGER" || role === "TEAM_LEAD"
+        ? {}
+        : {
+            _id: mongoose.Types.ObjectId.isValid(req.user.userId)
+              ? new mongoose.Types.ObjectId(req.user.userId)
+              : req.user.userId,
+          }
+
+    const users = await User.find(query).sort({ createdAt: -1 })
     res.json({ users: users.map(formatUser) })
   } catch (error) {
     console.error("Failed to fetch employees:", error)

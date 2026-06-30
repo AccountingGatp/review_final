@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { ArrowLeft, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import { NoDataFound } from "@/components/no-data-found"
 import { AddEmployeeDialog } from "@/components/employees/add-employee-dialog"
@@ -22,7 +22,13 @@ import { useAuth } from "@/hooks/use-auth"
 import { useEmployees } from "@/hooks/use-employees"
 import { useReviews } from "@/hooks/use-reviews"
 import { EMPLOYEE_ROLE_LABELS } from "@/lib/types"
-import { canAddEmployee, canDeleteEmployee, canEditEmployee } from "@/lib/permissions"
+import {
+  canAddEmployee,
+  canDeleteEmployee,
+  canEditEmployee,
+  getVisibleEmployees,
+} from "@/lib/permissions"
+import { canSeeAllEmployees } from "@/lib/user"
 
 function getInitials(name: string) {
   return name
@@ -35,10 +41,15 @@ function getInitials(name: string) {
 
 export function EmployeesView() {
   const { user } = useAuth()
-  const { employees, deleteEmployee, isLoading, error } = useEmployees()
+  const { employees: allEmployees, deleteEmployee, isLoading, error } = useEmployees()
   const { refreshReviews } = useReviews()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const employees = useMemo(
+    () => getVisibleEmployees(allEmployees, user),
+    [allEmployees, user]
+  )
 
   const showAddEmployee = canAddEmployee(user)
   const showEditEmployee = canEditEmployee(user)
@@ -76,7 +87,9 @@ export function EmployeesView() {
           <div>
             <h1 className="text-lg font-semibold">Employees</h1>
             <p className="text-sm text-muted-foreground">
-              All team members in the review system.
+              {canSeeAllEmployees(user?.role)
+                ? "All team members in the review system."
+                : "Your profile in the review system."}
             </p>
           </div>
           {showAddEmployee && <AddEmployeeDialog />}

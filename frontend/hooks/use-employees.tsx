@@ -10,7 +10,16 @@ import {
   type ReactNode,
 } from "react"
 
-import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee, type NewEmployeePayload, type UpdateEmployeePayload } from "@/lib/api"
+import { useAuth } from "@/hooks/use-auth"
+import {
+  createEmployee,
+  deleteEmployee,
+  fetchEmployees,
+  updateEmployee,
+  type NewEmployeePayload,
+  type UpdateEmployeePayload,
+} from "@/lib/api"
+import { getVisibleEmployees } from "@/lib/permissions"
 import type { Employee } from "@/lib/types"
 
 type NewEmployee = NewEmployeePayload
@@ -28,24 +37,36 @@ type EmployeesContextValue = {
 const EmployeesContext = createContext<EmployeesContextValue | null>(null)
 
 export function EmployeesProvider({ children }: { children: ReactNode }) {
-  const [employees, setEmployees] = useState<Employee[]>([])
+  const { user } = useAuth()
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const employees = useMemo(
+    () => getVisibleEmployees(allEmployees, user),
+    [allEmployees, user]
+  )
+
   const refreshEmployees = useCallback(async () => {
+    if (!user?.id) {
+      setAllEmployees([])
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
       const data = await fetchEmployees()
-      setEmployees(data)
+      setAllEmployees(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load employees")
-      setEmployees([])
+      setAllEmployees([])
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [user?.id])
 
   useEffect(() => {
     void refreshEmployees()
@@ -53,21 +74,24 @@ export function EmployeesProvider({ children }: { children: ReactNode }) {
 
   const addEmployee = useCallback(async (employee: NewEmployee) => {
     const created = await createEmployee(employee)
-    setEmployees((current) => [created, ...current])
+    setAllEmployees((current) => [created, ...current])
     return created
   }, [])
 
-  const editEmployee = useCallback(async (id: string, employee: UpdateEmployeePayload) => {
-    const updated = await updateEmployee(id, employee)
-    setEmployees((current) =>
-      current.map((item) => (item.id === id ? updated : item))
-    )
-    return updated
-  }, [])
+  const editEmployee = useCallback(
+    async (id: string, employee: UpdateEmployeePayload) => {
+      const updated = await updateEmployee(id, employee)
+      setAllEmployees((current) =>
+        current.map((item) => (item.id === id ? updated : item))
+      )
+      return updated
+    },
+    []
+  )
 
   const removeEmployee = useCallback(async (id: string) => {
     await deleteEmployee(id)
-    setEmployees((current) => current.filter((employee) => employee.id !== id))
+    setAllEmployees((current) => current.filter((employee) => employee.id !== id))
   }, [])
 
   const value = useMemo(

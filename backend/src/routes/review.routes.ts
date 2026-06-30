@@ -15,7 +15,7 @@ import {
   toDbAuthorRole,
   userRoleToAuthorRole,
 } from "../types/review.js"
-import { toDbUserRole } from "../types/user.js"
+import { normalizeUserRole, toDbUserRole } from "../types/user.js"
 
 const router = Router()
 
@@ -34,9 +34,20 @@ function formatReview(review: ReviewDocument) {
   }
 }
 
-router.get("/", async (_req, res: Response) => {
+router.get("/", authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const reviews = await Review.find().sort({ date: -1, createdAt: -1 })
+    if (!req.user) {
+      res.status(401).json({ message: "Authentication required" })
+      return
+    }
+
+    const role = normalizeUserRole(req.user.role)
+    const query =
+      role === "MANAGER" || role === "TEAM_LEAD"
+        ? {}
+        : { employeeId: req.user.userId }
+
+    const reviews = await Review.find(query).sort({ date: -1, createdAt: -1 })
     res.json({ reviews: reviews.map(formatReview) })
   } catch (error) {
     console.error("Failed to fetch reviews:", error)

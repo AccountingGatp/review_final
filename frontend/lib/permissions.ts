@@ -1,20 +1,35 @@
 import type { AuthUser } from "@/lib/auth-storage"
 import type { Employee, EmployeeRole } from "@/lib/types"
+import { canSeeAllEmployees, normalizeUserRole } from "@/lib/user"
 
 export function canAddEmployee(user: AuthUser | null) {
-  return user?.role === "MANAGER"
+  return normalizeUserRole(user?.role ?? "") === "MANAGER"
 }
 
 export function canWriteReview(user: AuthUser | null) {
-  return user?.role === "MANAGER" || user?.role === "TEAM_LEAD"
+  const role = normalizeUserRole(user?.role ?? "")
+  return role === "MANAGER" || role === "TEAM_LEAD"
 }
 
 export function canEditEmployee(user: AuthUser | null) {
-  return user?.role === "MANAGER"
+  return normalizeUserRole(user?.role ?? "") === "MANAGER"
 }
 
 export function canDeleteEmployee(user: AuthUser | null) {
-  return user?.role === "MANAGER"
+  return normalizeUserRole(user?.role ?? "") === "MANAGER"
+}
+
+export function getVisibleEmployees(
+  employees: Employee[],
+  user: AuthUser | null
+) {
+  if (!user) return []
+
+  if (canSeeAllEmployees(user.role)) {
+    return employees
+  }
+
+  return employees.filter((employee) => employee.id === user.id)
 }
 
 export function getReviewableEmployees(
@@ -25,13 +40,15 @@ export function getReviewableEmployees(
 
   const withoutSelf = employees.filter((employee) => employee.id !== user.id)
 
-  if (user.role === "MANAGER") {
+  const role = normalizeUserRole(user.role)
+
+  if (role === "MANAGER") {
     return withoutSelf.filter(
       (employee) => employee.role === "EMPLOYEE" || employee.role === "TEAM_LEAD"
     )
   }
 
-  if (user.role === "TEAM_LEAD") {
+  if (role === "TEAM_LEAD") {
     return withoutSelf.filter((employee) => employee.role === "EMPLOYEE")
   }
 
