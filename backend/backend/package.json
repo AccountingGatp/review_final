@@ -7,9 +7,11 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "seed:employees": "tsx src/scripts/seed-employees.ts"
+    "seed:employees": "tsx src/scripts/seed-employees.ts",
+    "seed:gatp": "tsx src/scripts/seed-gatp-employees.ts"
   },
   "dependencies": {
+    "@slack/web-api": "^7.17.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
